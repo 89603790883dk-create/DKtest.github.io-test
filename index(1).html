@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go/NoGo Тест Внимания</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .instructions li {
+            margin: 10px 0;
+            margin-left: 20px;
+        }
+        
+        .device-note {
+            font-size: 14px;
+            color: #666;
+            margin: 10px 0;
+            font-style: italic;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 20px 10px;
+            transition: transform 0.2s;
+            touch-action: manipulation;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        #testContainer {
+            display: none;
+            margin: 40px 0;
+        }
+        
+        .stimulus-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 40px;
+            margin: 30px 0;
+            min-height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s ease;
+        }
+        
+        .stimulus-card.correct {
+            background: #d4edda;
+            border: 3px solid #28a745;
+            animation: correctFlash 0.15s;
+        }
+        
+        .stimulus-card.incorrect {
+            background: #f8d7da;
+            border: 3px solid #dc3545;
+            animation: incorrectFlash 0.2s;
+        }
+        
+        @keyframes correctFlash {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes incorrectFlash {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        
+        .stimulus {
+            font-size: 100px;
+            font-weight: bold;
+            color: #667eea;
+            min-height: 100px;
+            font-family: Arial, sans-serif;
+            letter-spacing: 2px;
+        }
+        
+        .progress {
+            margin: 20px 0;
+            font-size: 18px;
+            color: #666;
+        }
+        
+        #results {
+            display: none;
+            margin: 30px 0;
+        }
+        
+        .result-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-size: 18px;
+        }
+        
+        .result-value {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 24px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .response-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            padding: 20px 60px;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 30px auto;
+            display: block;
+            width: 90%;
+            max-width: 300px;
+        }
+        
+        .response-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .response-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .stimulus {
+                font-size: 70px;
+            }
+            
+            .response-btn {
+                padding: 15px 40px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="intro">
+            <h1>🎯 Тест на внимание</h1>
+            <div class="instructions">
+                <strong>ИНСТРУКЦИИ:</strong>
+                <ul>
+                    <li><strong>Нажми кнопку "ОТВЕТИТЬ"</strong> когда видишь букву <strong>X</strong></li>
+                    <li><strong>НЕ нажимай</strong> на другие буквы (Y, V, K, W)</li>
+                    <li>Работай как можно быстрее и точнее</li>
+                    <li>У тебя есть <strong>1.5 секунды</strong> на реакцию</li>
+                    <li>Тест займёт примерно 90 секунд</li>
+                </ul>
+            </div>
+            <div class="device-note">
+                ℹ️ На компьютере можешь нажимать на кнопку или пробел
+            </div>
+            <button onclick="startTest()">Начать тест</button>
+        </div>
+        
+        <div id="testContainer">
+            <div class="progress">
+                Вопрос: <span id="trialCount">0</span> / 35
+            </div>
+            <div class="stimulus-card" id="stimulusCard">
+                <div class="stimulus" id="stimulus"></div>
+            </div>
+            <button class="response-btn" id="responseBtn" onclick="handleResponse()">ОТВЕТИТЬ</button>
+        </div>
+        
+        <div id="results">
+            <h2>📊 Результаты теста</h2>
+            <div class="result-item">
+                Точность: <span class="result-value" id="accuracy">0%</span>
+            </div>
+            <div class="result-item">
+                Среднее время реакции: <span class="result-value" id="avgRT">0 мс</span>
+            </div>
+            <div class="result-item">
+                Правильных ответов: <span class="result-value" id="correct">0</span> / 18
+            </div>
+            <div class="result-item">
+                Неправильных нажатий: <span class="result-value" id="errors">0</span>
+            </div>
+            <button onclick="location.reload()">Пройти тест снова</button>
+        </div>
+    </div>
+    
+    <script>
+        let testActive = false;
+        let testStarted = false;
+        let trials = [];
+        let currentTrial = 0;
+        let correctResponses = 0;
+        let incorrectResponses = 0;
+        let reactionTimes = [];
+        let lastStimulus = null;
+        let stimulusStartTime = null;
+        let stimulusTimeout = null;
+        let intertrialTimeout = null;
+        let responseAllowed = false;
+        
+        const TOTAL_TRIALS = 35;
+        const STIMULUS_DURATION = 1500;
+        const INTERTRIAL_INTERVAL = 600;
+        const FEEDBACK_DURATION = 150;
+        const TARGET = 'X';
+        
+        function generateTrials() {
+            trials = [];
+            const similarLetters = ['Y', 'V', 'K', 'W'];
+            
+            for (let i = 0; i < 18; i++) {
+                trials.push(TARGET);
+            }
+            
+            for (let i = 0; i < 17; i++) {
+                trials.push(similarLetters[Math.floor(Math.random() * similarLetters.length)]);
+            }
+            
+            for (let i = trials.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [trials[i], trials[j]] = [trials[j], trials[i]];
+            }
+            console.log('Проб создано:', trials.length);
+        }
+        
+        function startTest() {
+            console.log('===== ТЕСТ НАЧАЛСЯ =====');
+            document.getElementById('intro').style.display = 'none';
+            document.getElementById('testContainer').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            
+            testActive = true;
+            testStarted = true;
+            currentTrial = 0;
+            correctResponses = 0;
+            incorrectResponses = 0;
+            reactionTimes = [];
+            
+            generateTrials();
+            document.addEventListener('keydown', handleKeyPress);
+            
+            setTimeout(() => {
+                showNextTrial();
+            }, 300);
+        }
+        
+        function handleKeyPress(event) {
+            if (!testActive || !testStarted || !responseAllowed) return;
+            
+            if (event.code === 'Space' || event.key === ' ') {
+                event.preventDefault();
+                handleResponse();
+            }
+        }
+        
+        function handleResponse() {
+            if (!testActive || !testStarted || !responseAllowed || !stimulusStartTime) {
+                return;
+            }
+            
+            responseAllowed = false;
+            const rt = Date.now() - stimulusStartTime;
+            const card = document.getElementById('stimulusCard');
+            
+            if (lastStimulus === TARGET) {
+                correctResponses++;
+                reactionTimes.push(rt);
+                console.log('✓ Правильно! RT:', rt, 'мс');
+                
+                card.classList.remove('incorrect');
+                card.classList.add('correct');
+            } else {
+                incorrectResponses++;
+                console.log('✗ Ошибка! Нажал на', lastStimulus);
+                
+                card.classList.remove('correct');
+                card.classList.add('incorrect');
+            }
+            
+            clearTimeout(stimulusTimeout);
+            clearTimeout(intertrialTimeout);
+            stimulusStartTime = null;
+            
+            currentTrial++;
+            console.log('Текущая проба:', currentTrial, '/ 35');
+            
+            if (currentTrial < TOTAL_TRIALS) {
+                intertrialTimeout = setTimeout(showNextTrial, FEEDBACK_DURATION + INTERTRIAL_INTERVAL);
+            } else {
+                setTimeout(endTest, FEEDBACK_DURATION);
+            }
+        }
+        
+        function showNextTrial() {
+            if (currentTrial >= TOTAL_TRIALS) {
+                endTest();
+                return;
+            }
+            
+            lastStimulus = trials[currentTrial];
+            const stimulusEl = document.getElementById('stimulus');
+            const card = document.getElementById('stimulusCard');
+            const trialCountEl = document.getElementById('trialCount');
+            const responseBtn = document.getElementById('responseBtn');
+            
+            stimulusEl.textContent = '';
+            card.classList.remove('correct', 'incorrect');
+            card.style.background = '#f8f9fa';
+            card.style.border = 'none';
+            trialCountEl.textContent = (currentTrial + 1);
+            responseAllowed = false;
+            responseBtn.disabled = true;
+            
+            console.log('=== Проба', (currentTrial + 1), '===', 'Стимул:', lastStimulus);
+            
+            const showDelay = Math.random() * 300 + 300;
+            
+            const delayTimer = setTimeout(() => {
+                if (!testActive) return;
+                
+                stimulusEl.textContent = lastStimulus;
+                stimulusStartTime = Date.now();
+                responseAllowed = true;
+                responseBtn.disabled = false;
+                
+                stimulusTimeout = setTimeout(() => {
+                    if (!testActive) return;
+                    
+                    console.log('Стимул скрыт (время вышло)');
+                    stimulusEl.textContent = '';
+                    card.classList.remove('correct', 'incorrect');
+                    card.style.background = '#f8f9fa';
+                    card.style.border = 'none';
+                    stimulusStartTime = null;
+                    responseAllowed = false;
+                    responseBtn.disabled = true;
+                    
+                    currentTrial++;
+                    
+                    if (currentTrial < TOTAL_TRIALS) {
+                        intertrialTimeout = setTimeout(showNextTrial, INTERTRIAL_INTERVAL);
+                    } else {
+                        endTest();
+                    }
+                }, STIMULUS_DURATION);
+            }, showDelay);
+        }
+        
+        function endTest() {
+            console.log('===== ТЕСТ ЗАВЕРШЕН =====');
+            testActive = false;
+            testStarted = false;
+            document.removeEventListener('keydown', handleKeyPress);
+            document.getElementById('testContainer').style.display = 'none';
+            
+            const totalStimuli = trials.filter(t => t === TARGET).length;
+            const accuracy = totalStimuli > 0 ? ((correctResponses / totalStimuli) * 100).toFixed(1) : 0;
+            const avgRT = reactionTimes.length > 0 
+                ? Math.round(reactionTimes.reduce((a, b) => a + b) / reactionTimes.length)
+                : 0;
+            
+            console.log('Результаты:');
+            console.log('Точность:', accuracy + '%');
+            console.log('Среднее время:', avgRT + ' мс');
+            console.log('Правильно:', correctResponses, '/ 18');
+            console.log('Ошибок:', incorrectResponses);
+            
+            document.getElementById('accuracy').textContent = accuracy + '%';
+            document.getElementById('avgRT').textContent = avgRT + ' мс';
+            document.getElementById('correct').textContent = correctResponses;
+            document.getElementById('errors').textContent = incorrectResponses;
+            document.getElementById('results').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
